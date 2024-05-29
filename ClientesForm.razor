@@ -1,0 +1,87 @@
+﻿@page "/clientes/nuevo"
+@page "/clientes/editar/{Id:int}"
+@rendermode InteractiveServer
+@inject IRepositorio _repositorio;
+@inject NavigationManager _navigator;
+<PageTitle>@_message cliente</PageTitle>
+<h2>@_message cliente</h2>
+
+<EditForm Model="_cliente" FormName="frmCliente" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <div class="row mb-3">
+        <label for="txtNombre" class="col-2 col-form-label">Nombre</label>
+        <div class="col-10">
+            <InputText class="form-control" id="txtNombre" @bind-Value="_cliente.Nombre"></InputText>
+            <ValidationMessage For="@(() => _cliente.Nombre)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="txtDireccion" class="col-2 col-form-label">Correo</label>
+        <div class="col-10">
+            <InputText class="form-control" id="txtDireccion" @bind-Value="_cliente.Correo"></InputText>
+            <ValidationMessage For="@(() => _cliente.Correo)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="txtContacto" class="col-2 col-form-label">Teléfono</label>
+        <div class="col-10">
+            <InputText class="form-control" id="txtContacto" @bind-Value="_cliente.Telefono"></InputText>
+            <ValidationMessage For="@(() => _cliente.Telefono)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="txtDetallesMembresia" class="col-2 col-form-label">Detalles de Membresía</label>
+        <div class="col-10">
+            <InputSelect class="form-select" id="txtDetallesMembresia" @bind-Value="_cliente.DetallesMembresia">
+                <option value="Activo">Activo</option>
+                <option value="Vencida">Vencida</option>
+            </InputSelect>
+            <ValidationMessage For="@(() => _cliente.DetallesMembresia)" />
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <button type="button" class="btn btn-danger ms-2" @onclick="Cancelar">Cancelar</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private string _message = "";
+    private Cliente _cliente = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            Cliente cliente = await _repositorio.GetCliente(Id);
+            _cliente.Id = cliente.Id;
+            _cliente.Nombre = cliente.Nombre;
+            _cliente.Correo = cliente.Correo;
+            _cliente.Telefono = cliente.Telefono;
+            _cliente.DetallesMembresia = cliente.DetallesMembresia;
+            _message = "Editar";
+        }
+        else
+        {
+            _message = "Nuevo";
+        }
+    }
+
+    private async void Guardar()
+    {
+        if (Id > 0)
+        {
+            await _repositorio.UpdateCliente(Id, _cliente);
+        }
+        else
+        {
+            await _repositorio.AddCliente(_cliente);
+        }
+        Cancelar();
+    }
+
+    private void Cancelar()
+    {
+        _navigator.NavigateTo("/clientes");
+    }
+}

@@ -1,0 +1,123 @@
+﻿@page "/alquileres/nuevo"
+@page "/alquileres/editar/{Id:int}"
+@rendermode InteractiveServer
+@inject IRepositorio _repositorio;
+@inject NavigationManager _navigator;
+<PageTitle>@_message alquiler</PageTitle>
+<h2>@_message alquiler</h2>
+
+<EditForm Model="_alquiler" FormName="frmAlquiler" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <div class="row mb-3">
+        <label for="ddlPelicula" class="col-2 col-form-label">Película</label>
+        <div class="col-10">
+            <InputSelect class="form-control" id="ddlPelicula" @bind-Value="_alquiler.PeliculaId">
+                <option value="0" disabled="disabled">Seleccione una película</option>
+                @foreach (var pelicula in _peliculas)
+                {
+                    <option value="@pelicula.Id">@pelicula.Titulo</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => _alquiler.PeliculaId)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="ddlCliente" class="col-2 col-form-label">Cliente</label>
+        <div class="col-10">
+            <InputSelect class="form-control" id="ddlCliente" @bind-Value="_alquiler.ClienteId">
+                <option value="0" disabled="disabled">Seleccione un cliente</option>
+                @foreach (var cliente in _clientes)
+                {
+                    <option value="@cliente.Id">@cliente.Nombre</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => _alquiler.ClienteId)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="dtFechaAlquiler" class="col-2 col-form-label">Fecha de Alquiler</label>
+        <div class="col-10">
+            <InputDate class="form-control" id="dtFechaAlquiler" @bind-Value="_alquiler.FechaAlquiler"></InputDate>
+            <ValidationMessage For="@(() => _alquiler.FechaAlquiler)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="dtFechaDevolucion" class="col-2 col-form-label">Fecha de Devolución</label>
+        <div class="col-10">
+            <InputDate class="form-control" id="dtFechaDevolucion" @bind-Value="_alquiler.FechaDevolucion"></InputDate>
+            <ValidationMessage For="@(() => _alquiler.FechaDevolucion)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="numMonto" class="col-2 col-form-label">Monto</label>
+        <div class="col-10">
+            <InputNumber class="form-control" id="numMonto" @bind-Value="_alquiler.Monto"></InputNumber>
+            <ValidationMessage For="@(() => _alquiler.Monto)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="ddlEstadoAlquiler" class="col-2 col-form-label">Estado del Alquiler</label>
+        <div class="col-10">
+            <InputSelect class="form-control" id="ddlEstadoAlquiler" @bind-Value="_alquiler.EstadoAlquiler">
+                <option value="0" disabled="disabled">Seleccione un estado</option>
+                <option value="true">Activo</option>
+                <option value="false">Devuelto</option>
+            </InputSelect>
+            <ValidationMessage For="@(() => _alquiler.EstadoAlquiler)" />
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <button type="button" class="btn btn-danger ms-2" @onclick="Cancelar">Cancelar</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private string _message = "";
+    private Alquiler _alquiler = new();
+    private List<Pelicula> _peliculas = new();
+    private List<Cliente> _clientes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _peliculas = await _repositorio.GetAllPeliculas();
+        _clientes = await _repositorio.GetAllClientes();
+        if (Id > 0)
+        {
+            Alquiler alquiler = await _repositorio.GetAlquiler(Id);
+            _alquiler.Id = alquiler.Id;
+            _alquiler.PeliculaId = alquiler.PeliculaId;
+            _alquiler.ClienteId = alquiler.ClienteId;
+            _alquiler.FechaAlquiler = alquiler.FechaAlquiler;
+            _alquiler.FechaDevolucion = alquiler.FechaDevolucion;
+            _alquiler.Monto = alquiler.Monto;
+            _alquiler.EstadoAlquiler = alquiler.EstadoAlquiler;
+            _message = "Editar";
+        }
+        else
+        {
+            _message = "Nuevo";
+            DateTime fechaActual = DateTime.Now;
+            _alquiler.FechaAlquiler = fechaActual;
+            _alquiler.FechaDevolucion = fechaActual.AddDays(5);
+        }
+    }
+
+    private async void Guardar()
+    {
+        if (Id > 0)
+        {
+            await _repositorio.UpdateAlquiler(Id, _alquiler);
+        }
+        else
+        {
+            await _repositorio.AddAlquiler(_alquiler);
+        }
+        Cancelar();
+    }
+
+    private void Cancelar()
+    {
+        _navigator.NavigateTo("/alquileres");
+    }
+}

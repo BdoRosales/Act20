@@ -1,0 +1,120 @@
+﻿@page "/peliculas/nueva"
+@page "/peliculas/editar/{Id:int}"
+@rendermode InteractiveServer
+@inject IRepositorio _repositorio;
+@inject NavigationManager _navigator;
+<PageTitle>@_message película</PageTitle>
+<h2>@_message película</h2>
+
+<EditForm Model="_pelicula" FormName="frmPelicula" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <div class="row mb-3">
+        <label for="txtTitulo" class="col-2 col-form-label">Título</label>
+        <div class="col-10">
+            <InputText class="form-control" id="txtTitulo" @bind-Value="_pelicula.Titulo"></InputText>
+            <ValidationMessage For="@(() => _pelicula.Titulo)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="numAnioLanzamiento" class="col-2 col-form-label">Año de Lanzamiento</label>
+        <div class="col-10">
+            <InputNumber class="form-control" id="numAnioLanzamiento" @bind-Value="_pelicula.AñoLanzamiento"></InputNumber>
+            <ValidationMessage For="@(() => _pelicula.AñoLanzamiento)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="txtGenero" class="col-2 col-form-label">Género</label>
+        <div class="col-10">
+            <InputText class="form-control" id="txtGenero" @bind-Value="_pelicula.Genero"></InputText>
+            <ValidationMessage For="@(() => _pelicula.Genero)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="txtDirector" class="col-2 col-form-label">Director</label>
+        <div class="col-10">
+            <InputText class="form-control" id="txtDirector" @bind-Value="_pelicula.Director"></InputText>
+            <ValidationMessage For="@(() => _pelicula.Director)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="txtActoresPrincipales" class="col-2 col-form-label">Actores Principales</label>
+        <div class="col-10">
+            <InputText class="form-control" id="txtActoresPrincipales" @bind-Value="_pelicula.ActoresPrincipales"></InputText>
+            <ValidationMessage For="@(() => _pelicula.ActoresPrincipales)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="txtSinopsis" class="col-2 col-form-label">Sinopsis</label>
+        <div class="col-10">
+            <InputText class="form-control" id="txtSinopsis" @bind-Value="_pelicula.Sinopsis"></InputText>
+            <ValidationMessage For="@(() => _pelicula.Sinopsis)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="numPrecio" class="col-2 col-form-label">Precio de alquiler por día</label>
+        <div class="col-10">
+            <InputNumber class="form-control" id="numNumber" @bind-Value="_pelicula.PrecioAlquiler"></InputNumber>
+            <ValidationMessage For="@(() => _pelicula.PrecioAlquiler)" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label for="ddlEstadoDisponibilidad" class="col-2 col-form-label">Estado de Disponibilidad</label>
+        <div class="col-10">
+            <InputSelect class="form-control" id="ddlEstadoDisponibilidad" @bind-Value="_pelicula.DisponibleParaAlquiler">
+                <option value="0" disabled="disabled">Seleccione un estado</option>
+                <option value="false">No Disponible</option>
+                <option value="true">Disponible</option>
+            </InputSelect>
+            <ValidationMessage For="@(() => _pelicula.DisponibleParaAlquiler)" />
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <button type="button" class="btn btn-danger ms-2" @onclick="Cancelar">Cancelar</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private string _message = "";
+    private Pelicula _pelicula = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            Pelicula pelicula = await _repositorio.GetPelicula(Id);
+            _pelicula.Id = pelicula.Id;
+            _pelicula.Titulo = pelicula.Titulo;
+            _pelicula.AñoLanzamiento = pelicula.AñoLanzamiento;
+            _pelicula.Genero = pelicula.Genero;
+            _pelicula.Director = pelicula.Director;
+            _pelicula.ActoresPrincipales = pelicula.ActoresPrincipales;
+            _pelicula.Sinopsis = pelicula.Sinopsis;
+            _pelicula.PrecioAlquiler = pelicula.PrecioAlquiler;
+            _pelicula.DisponibleParaAlquiler = pelicula.DisponibleParaAlquiler;
+            _message = "Editar";
+        }
+        else
+        {
+            _message = "Nuevo";
+        }
+    }
+
+    private async void Guardar()
+    {
+        if (Id > 0)
+        {
+            await _repositorio.UpdatePelicula(Id, _pelicula);
+        }
+        else
+        {
+            await _repositorio.AddPelicula(_pelicula);
+        }
+        Cancelar();
+    }
+
+    private void Cancelar()
+    {
+        _navigator.NavigateTo("/peliculas");
+    }
+}

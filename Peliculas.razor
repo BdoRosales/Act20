@@ -1,0 +1,126 @@
+﻿@page "/peliculas"
+@rendermode InteractiveServer
+@inject IRepositorio _repositorio;
+@inject NavigationManager _navigator;
+<PageTitle>Catálogo de películas</PageTitle>
+<h1>Catálogo de películas</h1>
+
+<button type="button" class="btn btn-primary mb-2" @onclick="NuevaPelicula">Agregar película</button>
+
+<form>
+    <div class="input-group mb-3">
+        <input placeholder="Buscar película..." type="text" class="form-control" @bind="_texto" />
+        <select class="input-group-text" @bind="_campo">
+            <option value="titulo">Título</option>
+            <option value="año">Año</option>
+            <option value="genero">Género</option>
+            <option value="director">Director</option>
+            <option value="actores">Actores</option>
+        </select>
+        <button type="button" class="btn btn-primary" @onclick="Buscar">Buscar</button>
+    </div>
+</form>
+
+@if (_peliculasFiltradas == null)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+}
+else if (_peliculasFiltradas.Count == 0)
+{
+    <h4>No existen películas registradas</h4>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Año</th>
+                <th>Género</th>
+                <th>Director</th>
+                <th>Actores Principales</th>
+                <th>Precio alquiler</th>
+                <th>Disponible para Alquiler</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var pelicula in _peliculasFiltradas)
+            {
+                <tr>
+                    <td>@pelicula.Titulo</td>
+                    <td>@pelicula.AñoLanzamiento</td>
+                    <td>@pelicula.Genero</td>
+                    <td>@pelicula.Director</td>
+                    <td>@pelicula.ActoresPrincipales</td>
+                    <td>@pelicula.PrecioAlquiler</td>
+                    <td>@(pelicula.DisponibleParaAlquiler ? "Sí" : "No")</td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" title="Editar" @onclick="() => ModificarPelicula(pelicula.Id)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z" />
+                            </svg>
+                        </button>
+                        <button class="btn btn-danger btn-sm" title="Eliminar" @onclick="() => EliminarPelicula(pelicula)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">
+                                <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Pelicula>? _peliculas;
+    private List<Pelicula>? _peliculasFiltradas;
+    private string _texto = "";
+    private string _campo = "titulo";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _peliculas = await _repositorio.GetAllPeliculas();
+        _peliculasFiltradas = new List<Pelicula>(_peliculas);
+    }
+
+    private void NuevaPelicula()
+    {
+        _navigator.NavigateTo("/peliculas/nueva");
+    }
+
+    private async Task EliminarPelicula(Pelicula pelicula)
+    {
+        await _repositorio.DeletePelicula(pelicula.Id);
+        _peliculas!.Remove(pelicula);
+        _peliculasFiltradas!.Remove(pelicula);
+        StateHasChanged();
+    }
+
+    private void ModificarPelicula(int id)
+    {
+        _navigator.NavigateTo($"/peliculas/editar/{id}");
+    }
+
+    private void Buscar()
+    {
+        if (string.IsNullOrWhiteSpace(_texto))
+        {
+            _peliculasFiltradas = new List<Pelicula>(_peliculas!);
+        }
+        else
+        {
+            _peliculasFiltradas = _peliculas!.Where(pelicula =>
+                (_campo == "titulo" && pelicula.Titulo!.Contains(_texto, StringComparison.OrdinalIgnoreCase)) ||
+                (_campo == "año" && pelicula.AñoLanzamiento.ToString().Contains(_texto)) ||
+                (_campo == "genero" && pelicula.Genero!.Contains(_texto, StringComparison.OrdinalIgnoreCase)) ||
+                (_campo == "director" && pelicula.Director!.Contains(_texto, StringComparison.OrdinalIgnoreCase)) ||
+                (_campo == "actores" && pelicula.ActoresPrincipales!.Contains(_texto, StringComparison.OrdinalIgnoreCase))
+            ).ToList();
+        }
+        StateHasChanged();
+    }
+}
